@@ -4,19 +4,23 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.location.Location
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-
+import com.example.juegogeolocalizacion.databinding.ActivityMapsBinding
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.example.juegogeolocalizacion.databinding.ActivityMapsBinding
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     GoogleMap.OnMyLocationButtonClickListener, GoogleMap.OnMyLocationClickListener {
@@ -28,6 +32,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         const val REQUEST_LOCATION = 0
     }
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -38,6 +43,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+
+
     }
 
     /**
@@ -56,22 +63,65 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         mMap.setOnMyLocationButtonClickListener(this)
         mMap.setOnMyLocationClickListener(this)
         createMarker()
-        // Add a marker in Sydney and move the camera
+        val latitud =42.23720460752185
+        val longitud = -8.71065273021713
+        val colegio = LatLng(latitud, longitud)
+        mMap.addMarker(MarkerOptions().position(colegio).title("CFP DANIEL CASTELAO"))
+        mMap.animateCamera(
+            CameraUpdateFactory.newLatLngZoom(colegio, 18f),
+            4000,
+            null
+        )
+        getRandomLocation(colegio,500)
+        /*// Add a marker in Sydney and move the camera
         val sydney = LatLng(-34.0, 151.0)
         mMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
         //Cuando se  ha cargado el mapa le decimos que activa la localización
-        enableLocation()
+        enableLocation()*/
+
+    }
+    private fun getRandomLocation(point: LatLng, radius: Int): LatLng? {
+        val randomPoints: MutableList<LatLng> = ArrayList()
+        val randomDistances: MutableList<Float> = ArrayList()
+        val myLocation = Location("")
+        myLocation.latitude = point.latitude
+        myLocation.longitude = point.longitude
+
+        //This is to generate 10 random points
+        for (i in 0..9) {
+            val x0 = point.latitude
+            val y0 = point.longitude
+            val random = Random()
+
+            // Convert radius from meters to degrees
+            val radiusInDegrees = (radius / 111000f).toDouble()
+            val u: Double = random.nextDouble()
+            val v: Double = random.nextDouble()
+            val w = radiusInDegrees * sqrt(u)
+            val t = 2 * Math.PI * v
+            val x = w * cos(t)
+            val y = w * sin(t)
+
+            // Adjust the x-coordinate for the shrinking of the east-west distances
+            val new_x = x / cos(y0)
+            val foundLatitude = new_x + x0
+            val foundLongitude = y + y0
+            val randomLatLng = LatLng(foundLatitude, foundLongitude)
+            randomPoints.add(randomLatLng)
+            val l1 = Location("")
+            l1.latitude = randomLatLng.latitude
+            l1.longitude = randomLatLng.longitude
+            randomDistances.add(l1.distanceTo(myLocation))
+        }
+        //Get nearest point to the centre
+        val indexOfNearestPointToCentre = randomDistances.indexOf(Collections.min(randomDistances))
+        return randomPoints[indexOfNearestPointToCentre]
     }
 
     private fun createMarker() {
-        val vigo = LatLng(42.23282, -8.72264)
-        mMap.addMarker(MarkerOptions().position(vigo).title("Vigo"))
-        mMap.animateCamera(
-            CameraUpdateFactory.newLatLngZoom(vigo, 18f),
-            4000,
-            null
-        )
+
+
     }
 
     /**
