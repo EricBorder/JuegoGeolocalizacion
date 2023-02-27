@@ -1,4 +1,4 @@
-package com.example.juegogeolocalizacion
+package com.example.juegogeolocalizacion.ui.main
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.juegogeolocalizacion.R
 import com.example.juegogeolocalizacion.databinding.ActivityMapsBinding
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -27,6 +28,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
 
     private lateinit var mMap: GoogleMap
     private lateinit var binding: ActivityMapsBinding
+    val lista: MutableList<LatLng> = ArrayList()
+    val pizza = LatLng(42.236885208804985, -8.71270577351557)
+    val eroski = LatLng( 42.23678981617808, -8.71332656773451)
+    val dominos = LatLng(42.23716192322362, -8.714598466254115)
+    val garua = LatLng(42.237040398038395, -8.714910018041948)
+    val dulce = LatLng(42.23715075463219, -8.717367706858225)
+    val leyenda = LatLng(42.23765972725322, -8.7143774040161)
+    val rotonda = LatLng(42.237870222562535, -8.714192331598971)
+    val rotonda2 = LatLng(42.237854336166265, -8.712499857715919)
+    val abanca = LatLng(42.23779358466643, -8.719987835019815)
+    val rosalia = LatLng(42.23812124145109, -8.71786888989614)
+
+
 
     companion object {
         const val REQUEST_LOCATION = 0
@@ -63,8 +77,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         mMap.setOnMyLocationButtonClickListener(this)
         mMap.setOnMyLocationClickListener(this)
         createMarker()
-        val latitud =42.23720460752185
-        val longitud = -8.71065273021713
+        val latitud = 42.236390166
+        val longitud = -8.7141238733
         val colegio = LatLng(latitud, longitud)
         mMap.addMarker(MarkerOptions().position(colegio).title("CFP DANIEL CASTELAO"))
         mMap.animateCamera(
@@ -72,7 +86,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             4000,
             null
         )
-        getRandomLocation(colegio,500)
+        getRandomLocation(colegio, 500)
         /*// Add a marker in Sydney and move the camera
         val sydney = LatLng(-34.0, 151.0)
         mMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
@@ -81,6 +95,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         enableLocation()*/
 
     }
+
     private fun getRandomLocation(point: LatLng, radius: Int): LatLng? {
         val randomPoints: MutableList<LatLng> = ArrayList()
         val randomDistances: MutableList<Float> = ArrayList()
@@ -120,7 +135,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     }
 
     private fun createMarker() {
-
+        lista.add(dominos)
+        lista.add(pizza)
+        lista.add(eroski)
+        lista.add(rotonda)
+        lista.add(rotonda2)
+        lista.add(rosalia)
+        lista.add(garua)
+        lista.add(dulce)
+        lista.add(leyenda)
+        lista.add(abanca)
+        for (i in 0..4)
+            mMap.addMarker(MarkerOptions().position(lista.random()).title(""))
 
     }
 
@@ -231,4 +257,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     override fun onMyLocationClick(p0: Location) {
         Toast.makeText(this, "Estás en ${p0.latitude},${p0.longitude} ", Toast.LENGTH_SHORT).show()
     }
+
+    override fun onPause() {
+        super.onPause()
+        createMarker()
+    }
+
 }
