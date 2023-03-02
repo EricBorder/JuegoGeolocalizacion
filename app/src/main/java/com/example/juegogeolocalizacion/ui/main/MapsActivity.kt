@@ -15,8 +15,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.cos
@@ -30,7 +29,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     private lateinit var binding: ActivityMapsBinding
     val lista: MutableList<LatLng> = ArrayList()
     val pizza = LatLng(42.236885208804985, -8.71270577351557)
-    val eroski = LatLng( 42.23678981617808, -8.71332656773451)
+    val eroski = LatLng(42.23678981617808, -8.71332656773451)
     val dominos = LatLng(42.23716192322362, -8.714598466254115)
     val garua = LatLng(42.237040398038395, -8.714910018041948)
     val dulce = LatLng(42.23715075463219, -8.717367706858225)
@@ -40,6 +39,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     val abanca = LatLng(42.23779358466643, -8.719987835019815)
     val rosalia = LatLng(42.23812124145109, -8.71786888989614)
 
+    val latitud = 42.236390166
+    val longitud = -8.7141238733
+    val colegio = LatLng(latitud, longitud)
 
 
     companion object {
@@ -77,9 +79,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         mMap.setOnMyLocationButtonClickListener(this)
         mMap.setOnMyLocationClickListener(this)
         createMarker()
-        val latitud = 42.236390166
-        val longitud = -8.7141238733
-        val colegio = LatLng(latitud, longitud)
         mMap.addMarker(MarkerOptions().position(colegio).title("CFP DANIEL CASTELAO"))
         mMap.animateCamera(
             CameraUpdateFactory.newLatLngZoom(colegio, 18f),
@@ -87,6 +86,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             null
         )
         getRandomLocation(colegio, 500)
+
+
+
         /*// Add a marker in Sydney and move the camera
         val sydney = LatLng(-34.0, 151.0)
         mMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
@@ -145,9 +147,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         lista.add(dulce)
         lista.add(leyenda)
         lista.add(abanca)
+
         for (i in 0..4)
             mMap.addMarker(MarkerOptions().position(lista.random()).title(""))
-
+            val polylineOptions = PolylineOptions()
+                .add(colegio,lista.random())
+                .color(ContextCompat.getColor(this,R.color.green))
+            val polyline = mMap.addPolyline(polylineOptions)
+            val pattern = listOf(
+                Dot(), Gap(10F), Dash(50F), Gap(10F)
+            )
+            polyline.pattern = pattern
     }
 
     /**
@@ -262,5 +272,39 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         super.onPause()
         createMarker()
     }
+
+    private fun createPolylines() {
+        val polylineOptions = PolylineOptions()
+           /* .add(dominos)
+            .add(pizza)
+            .add(dulce)
+            .add(garua)
+            .add(abanca)
+            .add(eroski)
+            .add(rotonda)
+            .add(rotonda2)
+            .add(rosalia)
+            .add(leyenda)
+            .add(abanca)*/
+            .color(ContextCompat.getColor(this,R.color.green))
+        val polyline = mMap.addPolyline(polylineOptions)
+        val pattern = listOf(
+            Dot(), Gap(10F), Dash(50F), Gap(10F)
+        )
+        polyline.pattern = pattern
+        polyline.isClickable = true
+        mMap.setOnPolylineClickListener {changeColor(it)  }
+    }
+    fun changeColor(polyline: Polyline){
+        val color = (0..3).random()
+        when(color){
+            0 -> polyline.color = ContextCompat.getColor(this, R.color.purple_500)
+            1 -> polyline.color = ContextCompat.getColor(this, R.color.black)
+            2 -> polyline.color = ContextCompat.getColor(this, R.color.green)
+            3 -> polyline.color = ContextCompat.getColor(this, androidx.appcompat.R.color.material_blue_grey_800)
+        }
+    }
+
+
 
 }
