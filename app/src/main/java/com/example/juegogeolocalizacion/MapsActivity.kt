@@ -1,3 +1,5 @@
+package com.example.juegogeolocalizacion
+
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
@@ -11,7 +13,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.example.juegogeolocalizacion.R
 import com.example.juegogeolocalizacion.databinding.ActivityMapsBinding
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -19,7 +20,6 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.maps.model.PolylineOptions
 import java.util.*
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
@@ -63,10 +63,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
                     val locationCoordenada = Location("")
                     locationCoordenada.latitude = coordenada.latitude
                     locationCoordenada.longitude = coordenada.longitude
-                    Log.d("nuria2", locationCoordenada.latitude.toString())
+                    Log.d("Sergio2.0", locationCoordenada.latitude.toString())
                     // Calcular la distancia entre la ubicación actual y la ubicación guardada
                     val distancia = location.distanceTo(locationCoordenada)
-                    Log.d("nuria", distancia.toString())
+                    Log.d("Sergio", distancia.toString())
 
                     // Si la distancia es menor a 10 metros, agregar un marcador en el mapa
                     if (distancia < 20) {
@@ -81,11 +81,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             }
 
             override fun onProviderEnabled(provider: String) {
-                Log.d("nuria3", "provider enable")
+                Log.d("Sergio3.0", "provider enable")
             }
 
             override fun onProviderDisabled(provider: String) {
-                Log.d("nuria3", "provider disable")
+                Log.d("Sergio4.0", "provider disable")
             }
 
         }
