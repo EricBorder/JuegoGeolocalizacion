@@ -1,10 +1,12 @@
-package com.example.juegogeolocalizacion.ui.main
-
-import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
 import android.os.Bundle
+import android.os.Looper
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -15,40 +17,33 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.*
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.PolylineOptions
 import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlin.math.sqrt
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
     GoogleMap.OnMyLocationButtonClickListener, GoogleMap.OnMyLocationClickListener {
 
     private lateinit var mMap: GoogleMap
     private lateinit var binding: ActivityMapsBinding
-    val lista: MutableList<LatLng> = ArrayList()
-    val pizza = LatLng(42.236885208804985, -8.71270577351557)
-    val eroski = LatLng(42.23678981617808, -8.71332656773451)
-    val dominos = LatLng(42.23716192322362, -8.714598466254115)
-    val garua = LatLng(42.237040398038395, -8.714910018041948)
-    val dulce = LatLng(42.23715075463219, -8.717367706858225)
-    val leyenda = LatLng(42.23765972725322, -8.7143774040161)
-    val rotonda = LatLng(42.237870222562535, -8.714192331598971)
-    val rotonda2 = LatLng(42.237854336166265, -8.712499857715919)
-    val abanca = LatLng(42.23779358466643, -8.719987835019815)
-    val rosalia = LatLng(42.23812124145109, -8.71786888989614)
+    private val latitude = 42.23639016660114
+    private val longitude = -8.71412387331969
+    private var colelatLng: LatLng = LatLng(latitude, longitude)
+    private lateinit var locationManager: LocationManager
 
-    val latitud = 42.236390166
-    val longitud = -8.7141238733
-    val colegio = LatLng(latitud, longitud)
+    //Minimo tiempo para updates en Milisegundos
+    private val MIN_TIEMPO_ENTRE_UPDATES = (15000).toLong() // 1 minuto
+
+    //Minima distancia para updates en metros.
+    private val MIN_CAMBIO_DISTANCIA_PARA_UPDATES = 1.5f // 1.5 metros
 
 
     companion object {
         const val REQUEST_LOCATION = 0
     }
 
-
+    @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -60,6 +55,51 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
+        // Definir un LocationListener para recibir actualizaciones de ubicación
+        val locListener = object : LocationListener {
+            override fun onLocationChanged(location: Location) {
+                // Iterar sobre las ubicaciones guardadas en el ArrayList
+                for (coordenada in crearPuntos()) {
+                    val locationCoordenada = Location("")
+                    locationCoordenada.latitude = coordenada.latitude
+                    locationCoordenada.longitude = coordenada.longitude
+                    Log.d("nuria2", locationCoordenada.latitude.toString())
+                    // Calcular la distancia entre la ubicación actual y la ubicación guardada
+                    val distancia = location.distanceTo(locationCoordenada)
+                    Log.d("nuria", distancia.toString())
+
+                    // Si la distancia es menor a 10 metros, agregar un marcador en el mapa
+                    if (distancia < 20) {
+                        val markerOptions = MarkerOptions().position(coordenada)
+                        mMap.addMarker(markerOptions)
+                    }
+                }
+            }
+
+            @Deprecated("Deprecated in Java")
+            override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+            }
+
+            override fun onProviderEnabled(provider: String) {
+                Log.d("nuria3", "provider enable")
+            }
+
+            override fun onProviderDisabled(provider: String) {
+                Log.d("nuria3", "provider disable")
+            }
+
+        }
+
+        // Inicializar el LocationManager y solicitar actualizaciones de ubicación
+        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+        locationManager.requestLocationUpdates(
+            LocationManager.GPS_PROVIDER,
+            MIN_TIEMPO_ENTRE_UPDATES,
+            MIN_CAMBIO_DISTANCIA_PARA_UPDATES,
+            locListener,
+            Looper.myLooper()
+        )
 
     }
 
@@ -72,6 +112,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
+    @SuppressLint("MissingPermission")
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         //Hago visible los botones para apliar y desampliar el mapa
@@ -79,94 +120,39 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         mMap.setOnMyLocationButtonClickListener(this)
         mMap.setOnMyLocationClickListener(this)
         createMarker()
-        mMap.addMarker(MarkerOptions().position(colegio).title("CFP DANIEL CASTELAO"))
-        mMap.animateCamera(
-            CameraUpdateFactory.newLatLngZoom(colegio, 18f),
-            4000,
-            null
-        )
-        getRandomLocation(colegio, 500)
 
+        val cole = LatLng(42.23639016660114, -8.71412387331969)
+        mMap.addMarker(MarkerOptions().position(cole).title("cole"))
 
-
-        /*// Add a marker in Sydney and move the camera
-        val sydney = LatLng(-34.0, 151.0)
-        mMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
         //Cuando se  ha cargado el mapa le decimos que activa la localización
-        enableLocation()*/
+        enableLocation()
 
-    }
 
-    private fun getRandomLocation(point: LatLng, radius: Int): LatLng? {
-        val randomPoints: MutableList<LatLng> = ArrayList()
-        val randomDistances: MutableList<Float> = ArrayList()
-        val myLocation = Location("")
-        myLocation.latitude = point.latitude
-        myLocation.longitude = point.longitude
+        // mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
 
-        //This is to generate 10 random points
-        for (i in 0..9) {
-            val x0 = point.latitude
-            val y0 = point.longitude
-            val random = Random()
-
-            // Convert radius from meters to degrees
-            val radiusInDegrees = (radius / 111000f).toDouble()
-            val u: Double = random.nextDouble()
-            val v: Double = random.nextDouble()
-            val w = radiusInDegrees * sqrt(u)
-            val t = 2 * Math.PI * v
-            val x = w * cos(t)
-            val y = w * sin(t)
-
-            // Adjust the x-coordinate for the shrinking of the east-west distances
-            val new_x = x / cos(y0)
-            val foundLatitude = new_x + x0
-            val foundLongitude = y + y0
-            val randomLatLng = LatLng(foundLatitude, foundLongitude)
-            randomPoints.add(randomLatLng)
-            val l1 = Location("")
-            l1.latitude = randomLatLng.latitude
-            l1.longitude = randomLatLng.longitude
-            randomDistances.add(l1.distanceTo(myLocation))
-        }
-        //Get nearest point to the centre
-        val indexOfNearestPointToCentre = randomDistances.indexOf(Collections.min(randomDistances))
-        return randomPoints[indexOfNearestPointToCentre]
     }
 
     private fun createMarker() {
-        lista.add(dominos)
-        lista.add(pizza)
-        lista.add(eroski)
-        lista.add(rotonda)
-        lista.add(rotonda2)
-        lista.add(rosalia)
-        lista.add(garua)
-        lista.add(dulce)
-        lista.add(leyenda)
-        lista.add(abanca)
-
-        for (i in 0..4)
-            mMap.addMarker(MarkerOptions().position(lista.random()).title(""))
-            val polylineOptions = PolylineOptions()
-                .add(colegio,lista.random())
-                .color(ContextCompat.getColor(this,R.color.green))
-            val polyline = mMap.addPolyline(polylineOptions)
-            val pattern = listOf(
-                Dot(), Gap(10F), Dash(50F), Gap(10F)
-            )
-            polyline.pattern = pattern
+        val vigo = LatLng(42.23282, -8.72264)
+        mMap.addMarker(MarkerOptions().position(vigo).title("Vigo"))
+        mMap.animateCamera(
+            CameraUpdateFactory.newLatLngZoom(vigo, 15f),
+            4000,
+            null
+        )
     }
 
     /**
      * Método que comprueba que el permiso este activado, pidiendo el permiso y viendo si es igual a el PERMISSION_GRANTED
      */
-    private fun isPermissionsGranted() = ContextCompat.checkSelfPermission(
-        this,
-        Manifest.permission.ACCESS_FINE_LOCATION
-    ) == PackageManager.PERMISSION_GRANTED
+    private fun isPermissionsGranted() =
+        ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(
+                    this,
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+                ) ==
+                PackageManager.PERMISSION_GRANTED
 
 
     //SupressLint es una interfaz que indica que se deben ignoar las advertencias especificadas
@@ -195,6 +181,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         if (ActivityCompat.shouldShowRequestPermissionRationale(
                 this,
                 android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) && ActivityCompat.shouldShowRequestPermissionRationale(
+                this,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION
             )
         ) {
             Toast.makeText(this, "Ve a ajustes y acepta los permisos", Toast.LENGTH_SHORT).show()
@@ -203,8 +192,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             //Si entra por el else es la primera vez que le pedimos los permisos
             //Se le pasa el companion object para saber si ha aceptado los permisos
             ActivityCompat.requestPermissions(
-                this,
-                arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
+                this, arrayOf<String>(
+                    android.Manifest.permission.ACCESS_FINE_LOCATION,
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+                ),
                 REQUEST_LOCATION
             )
         }
@@ -268,14 +259,51 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
         Toast.makeText(this, "Estás en ${p0.latitude},${p0.longitude} ", Toast.LENGTH_SHORT).show()
     }
 
-    override fun onPause() {
-        super.onPause()
-        createMarker()
+
+    private fun crearPuntos(): MutableList<LatLng> {
+        val randomPoints: MutableList<LatLng> = ArrayList()
+        val dLatLng = LatLng(42.23708372564379, -8.714509383173333)
+        val gLatLng = LatLng(42.23768047558122, -8.71356698179755)
+        val fLatLng = LatLng(42.23915341127386, -8.71947734143543)
+        val faLatLng = LatLng(42.23803379805943, -8.71477555189415)
+        val bLatLng = LatLng(42.23845365271288, -8.716789835362103)
+        randomPoints.add(dLatLng)
+        randomPoints.add(gLatLng)
+        randomPoints.add(fLatLng)
+        randomPoints.add(faLatLng)
+        randomPoints.add(bLatLng)
+        return randomPoints
     }
 
-    private fun createPolylines() {
-        val polylineOptions = PolylineOptions()
-           /* .add(dominos)
+    /**
+     *Método en el que introduces unas coodernadas y un radio y genera marcas aleatorias en el mapa
+     * @param point : el punto de donde se van a generar las marcas
+     * @return el valor mas cercano al punto dado
+     */
+    private fun distacia(point: LatLng): LatLng {
+        val myLocation = Location("")
+        myLocation.latitude = point.latitude
+        myLocation.longitude = point.longitude
+        val randomPoints: MutableList<LatLng> = crearPuntos()
+        val randomDistances: MutableList<Float> = ArrayList()
+
+        for (i in randomPoints.indices) {
+            val l1 = Location("")
+            l1.latitude = randomPoints[i].latitude
+            l1.longitude = randomPoints[i].longitude
+            randomDistances.add(l1.distanceTo(myLocation))
+        }
+        //Coge el valor mas cercano a la marca actual
+        val indexMasCercaMarca = randomDistances.indexOf(Collections.min(randomDistances))
+        colelatLng = randomPoints[indexMasCercaMarca]
+        return randomPoints[indexMasCercaMarca]
+    }
+
+}
+//ESTO NO LO USÉ
+/* private fun createPolylines() {
+     val polylineOptions = PolylineOptions()
+        *//* .add(dominos)
             .add(pizza)
             .add(dulce)
             .add(garua)
@@ -285,7 +313,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             .add(rotonda2)
             .add(rosalia)
             .add(leyenda)
-            .add(abanca)*/
+            .add(abanca)*//*
             .color(ContextCompat.getColor(this,R.color.green))
         val polyline = mMap.addPolyline(polylineOptions)
         val pattern = listOf(
@@ -302,9 +330,4 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback,
             1 -> polyline.color = ContextCompat.getColor(this, R.color.black)
             2 -> polyline.color = ContextCompat.getColor(this, R.color.green)
             3 -> polyline.color = ContextCompat.getColor(this, androidx.appcompat.R.color.material_blue_grey_800)
-        }
-    }
-
-
-
-}
+        }*/
